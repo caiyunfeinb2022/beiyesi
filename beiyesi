@@ -1,0 +1,47 @@
+strength_C = np.random.normal(prior_distribution.mean(), prior_distribution.std())
+
+        p_AB = get_conditional_probabilities(outcome_AB, prior_distribution.mean(), strength_B)
+        p_BC = get_conditional_probabilities(outcome_BC, strength_B, strength_C)
+
+        likelihood = p_AB * p_BC
+        samples.append((strength_B, strength_C, likelihood))
+
+    samples = np.array(samples)
+    samples[:, 2] /= np.sum(samples[:, 2])  # 归一化权重
+    return samples
+
+# Gibbs采样方法
+def gibbs_sampling(num_samples=10000):
+    samples = []
+
+    for _ in range(num_samples):
+        strength_B = np.random.normal(prior_distribution.mean(), prior_distribution.std())
+        p_AB = get_conditional_probabilities(outcome_AB, prior_distribution.mean(), strength_B)
+
+        if np.random.rand() < p_AB:
+            samples.append((strength_B, prior_distribution.mean()))
+        else:
+            strength_C = np.random.normal(prior_distribution.mean(), prior_distribution.std())
+            samples.append((strength_B, strength_C))
+
+    return np.array(samples)
+
+# 获取后验分布
+exact_result = exact_inference()
+rejection_result = rejection_sampling()
+likelihood_weighted_result = likelihood_weighted_sampling()
+gibbs_result = gibbs_sampling()
+
+# 输出结果
+print("精确求解结果后验分布:")
+print(np.unravel_index(np.argmax(exact_result), exact_result.shape))
+
+print("拒绝采样结果后验分布:")
+print(np.mean(rejection_result, axis=0))
+
+print("似然加权采样结果后验分布:")
+weighted_mean = np.average(likelihood_weighted_result[:, :2], axis=0, weights=likelihood_weighted_result[:, 2])
+print(weighted_mean)
+
+print("Gibbs采样结果后验分布:")
+print(np.mean(gibbs_result, axis=0))
